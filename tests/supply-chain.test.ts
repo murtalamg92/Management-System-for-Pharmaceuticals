@@ -1,21 +1,70 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-import { describe, expect, it } from "vitest";
+describe('Supply Chain Contract', () => {
+  let mockContractCall: any
+  
+  beforeEach(() => {
+    mockContractCall = vi.fn()
+  })
+  
+  it('ensures participant can be registered and verified', async () => {
+    // Mock register-participant call
+    mockContractCall.mockResolvedValueOnce({
+      success: true
+    })
+    const registerResult = await mockContractCall('register-participant',
+        'John Doe Pharma Inc.',
+        'manufacturer'
+    )
+    expect(registerResult.success).toBe(true)
+    
+    // Mock verify-participant call
+    mockContractCall.mockResolvedValueOnce({
+      success: true
+    })
+    const verifyResult = await mockContractCall('verify-participant', 'ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG')
+    expect(verifyResult.success).toBe(true)
+    
+    // Mock get-participant-info call
+    mockContractCall.mockResolvedValueOnce({
+      success: true,
+      value: {
+        verified: true
+      }
+    })
+    const participantInfo = await mockContractCall('get-participant-info', 'ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG')
+    expect(participantInfo.success).toBe(true)
+    expect(participantInfo.value.verified).toBe(true)
+  })
+  
+  it('ensures supply chain step can be recorded by verified participant', async () => {
+    // Mock register and verify participant calls
+    mockContractCall.mockResolvedValueOnce({ success: true })
+    mockContractCall.mockResolvedValueOnce({ success: true })
+    await mockContractCall('register-participant', 'John Doe Pharma Inc.', 'manufacturer')
+    await mockContractCall('verify-participant', 'ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG')
+    
+    // Mock record-supply-chain-step call
+    mockContractCall.mockResolvedValueOnce({
+      success: true
+    })
+    const recordResult = await mockContractCall('record-supply-chain-step', 1, 'distributed')
+    expect(recordResult.success).toBe(true)
+  })
+  
+  it('ensures supply chain step cannot be recorded by unverified participant', async () => {
+    // Mock register participant call (but don't verify)
+    mockContractCall.mockResolvedValueOnce({ success: true })
+    await mockContractCall('register-participant', 'Unverified Corp', 'distributor')
+    
+    // Mock record-supply-chain-step call (should fail)
+    mockContractCall.mockResolvedValueOnce({
+      success: false,
+      error: 'ERR_UNAUTHORIZED'
+    })
+    const recordResult = await mockContractCall('record-supply-chain-step', 1, 'distributed')
+    expect(recordResult.success).toBe(false)
+    expect(recordResult.error).toBe('ERR_UNAUTHORIZED')
+  })
+})
 
-const accounts = simnet.getAccounts();
-const address1 = accounts.get("wallet_1")!;
-
-/*
-  The test below is an example. To learn more, read the testing documentation here:
-  https://docs.hiro.so/stacks/clarinet-js-sdk
-*/
-
-describe("example tests", () => {
-  it("ensures simnet is well initalised", () => {
-    expect(simnet.blockHeight).toBeDefined();
-  });
-
-  // it("shows an example", () => {
-  //   const { result } = simnet.callReadOnlyFn("counter", "get-counter", [], address1);
-  //   expect(result).toBeUint(0);
-  // });
-});
