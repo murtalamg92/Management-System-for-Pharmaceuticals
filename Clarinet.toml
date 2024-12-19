@@ -9,6 +9,11 @@ requirements = []
 path = 'contracts/drug-nft.clar'
 clarity_version = 2
 epoch = 2.5
+
+[contracts.supply-chain]
+path = 'contracts/supply-chain.clar'
+clarity_version = 2
+epoch = 2.5
 [repl.analysis]
 passes = ['check_checker']
 
